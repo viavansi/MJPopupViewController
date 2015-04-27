@@ -24,6 +24,14 @@
 @end
 
 static NSString *MJPopupViewDismissedKey = @"MJPopupViewDismissed";
+UIViewController *viewController;
+CGRect initialFrame;
+UIView *topView;
+UIView *topViewModified;
+CGSize keyboardSize;
+BOOL isPortrait;
+BOOL isLandscape;
+BOOL firstTime;
 
 ////////////////////////////////////////////////////////////////////////////
 #pragma mark -
@@ -32,6 +40,67 @@ static NSString *MJPopupViewDismissedKey = @"MJPopupViewDismissed";
 @implementation UIViewController (MJPopupViewController)
 
 static void * const keypath = (void*)&keypath;
+
+-(void)viewDidLoad{
+    NSLog(@"view did load!");
+    
+    isPortrait = NO;
+    isLandscape = NO;
+    firstTime = YES;
+    
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange:)
+                                                 name: UIDeviceOrientationDidChangeNotification object:nil];
+    
+    // Listen for keyboard appearances and disappearances
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardDidShow:)
+                                                 name:UIKeyboardDidShowNotification
+                                               object:nil];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyboardDidHide:)
+                                                 name:UIKeyboardDidHideNotification
+                                               object:nil];
+}
+
+- (void)deviceOrientationDidChange:(NSNotification *)notification {
+    if([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad){
+        NSLog(@"Rotada");
+        [self performSelector:@selector(callFadeViewIn) withObject:self afterDelay:0.8];
+    }
+    
+}
+
+-(void) callFadeViewIn{
+
+    UIView *topViewCopy;
+    CGRect topViewFrame;
+    
+    if (initialFrame.size.width == 0){
+        initialFrame = viewController.view.frame;
+    }
+    
+    if (topView.frame.size.width == 0){
+        topView = [self topView];
+    }
+    
+    if (keyboardSize.height != 0){
+        CGFloat newHeight = topView.frame.size.height - keyboardSize.height;
+        topViewFrame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, topView.frame.size.width, newHeight);
+    }else{
+        topViewFrame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, topView.frame.size.width, topView.frame.size.height);
+    }
+    
+    if (topView.frame.size.width != 0){
+
+        viewController.view.frame = initialFrame;
+        
+        [self fadeViewIn:viewController.view sourceView:topView overlayView:nil popupFrame:viewController.view.frame sourceView:topViewFrame];
+        
+    }
+
+}
 
 - (UIViewController*)mj_popupViewController {
     return objc_getAssociatedObject(self, kMJPopupViewController);
@@ -59,6 +128,7 @@ static void * const keypath = (void*)&keypath;
 
 - (void)presentPopupViewController:(UIViewController*)popupViewController animationType:(MJPopupViewAnimation)animationType
 {
+    viewController = popupViewController;
     [self presentPopupViewController:popupViewController animationType:animationType dismissed:nil];
 }
 
@@ -313,6 +383,33 @@ static void * const keypath = (void*)&keypath;
 
 #pragma mark --- Fade
 
+
+- (void)fadeViewIn:(UIView*)popupView sourceView:(UIView*)sourceView overlayView:(UIView*)overlayView popupFrame:(CGRect)popupFrame sourceView:(CGRect)sourceFrame
+{
+    // Generating Start and Stop Positions
+    CGSize sourceSize = sourceFrame.size;
+    CGSize popupSize = popupFrame.size;
+    CGRect popupEndRect = CGRectMake((sourceSize.width - popupSize.width) / 2,
+                                     (sourceSize.height - popupSize.height) / 2,
+                                     popupSize.width,
+                                     popupSize.height);
+    
+    // Set starting properties
+    popupView.frame = popupEndRect;
+    popupView.alpha = 0.0f;
+    
+    [UIView animateWithDuration:kPopupModalAnimationDuration animations:^{
+        [self.mj_popupViewController viewWillAppear:NO];
+        self.mj_popupBackgroundView.alpha = 0.5f;
+//        self.mj_popupBackgroundView.frame = sourceFrame;
+        [self.mj_popupBackgroundView drawRect:popupFrame];
+        popupView.alpha = 1.0f;
+    } completion:^(BOOL finished) {
+        [self.mj_popupViewController viewDidAppear:NO];
+    }];
+}
+
+
 - (void)fadeViewIn:(UIView*)popupView sourceView:(UIView*)sourceView overlayView:(UIView*)overlayView
 {
     // Generating Start and Stop Positions
@@ -370,6 +467,29 @@ static void * const keypath = (void*)&keypath;
 - (void(^)(void))dismissedCallback
 {
     return objc_getAssociatedObject(self, &MJPopupViewDismissedKey);
+}
+
+#pragma mark keyboard
+
+- (void)keyboardDidShow: (NSNotification *) notification{
+    
+    NSLog(@"Teclado visible");
+    // Get the size of the keyboard.
+    keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
+    
+    //Given size may not account for screen rotation
+    int height = MIN(keyboardSize.height,keyboardSize.width);
+    int width = MAX(keyboardSize.height,keyboardSize.width);
+    
+    [self callFadeViewIn];
+}
+
+- (void)keyboardDidHide: (NSNotification *) notification{
+    
+    NSLog(@"Teclado oculto");
+    keyboardSize.height = 0;
+    keyboardSize.width = 0;
+    [self callFadeViewIn];
 }
 
 @end
