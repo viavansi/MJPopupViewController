@@ -21,7 +21,7 @@
     CGColorSpaceRelease(colorSpace);
     
     CGPoint center = CGPointMake(self.bounds.size.width/2, self.bounds.size.height/2);
-    float radius = MIN(self.bounds.size.width , self.bounds.size.height) ;
+    float radius = 0.2; //MIN(self.bounds.size.width , self.bounds.size.height) ;
     CGContextDrawRadialGradient (context, gradient, center, 0, center, radius, kCGGradientDrawsAfterEndLocation);
     CGGradientRelease(gradient);
 }
