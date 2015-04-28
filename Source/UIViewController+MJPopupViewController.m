@@ -67,7 +67,8 @@ static void * const keypath = (void*)&keypath;
 - (void)deviceOrientationDidChange:(NSNotification *)notification {
     if([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad){
         NSLog(@"Rotada");
-        [self performSelector:@selector(callFadeViewIn) withObject:self afterDelay:0.8];
+        firstTime = YES;
+//        [self performSelector:@selector(callFadeViewIn) withObject:self afterDelay:0.8];
     }
     
 }
@@ -76,7 +77,33 @@ static void * const keypath = (void*)&keypath;
 
     UIView *topViewCopy;
     CGRect topViewFrame;
+
+    if (initialFrame.size.width == 0){
+        initialFrame = viewController.view.frame;
+    }
     
+    if (topView.frame.size.width == 0){
+        topView = [self topView];
+    }
+
+    CGFloat newHeight = topView.frame.size.height - keyboardSize.height;
+        topViewFrame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, topView.frame.size.width, newHeight);
+
+    if (topView.frame.size.width != 0){
+
+        viewController.view.frame = initialFrame;
+        
+        [self fadeViewIn:viewController.view sourceView:topView overlayView:nil popupFrame:viewController.view.frame sourceView:topViewFrame];
+        
+    }
+    
+}
+
+-(void) callFadeViewOut{
+    
+    UIView *topViewCopy;
+    CGRect topViewFrame;
+
     if (initialFrame.size.width == 0){
         initialFrame = viewController.view.frame;
     }
@@ -85,21 +112,17 @@ static void * const keypath = (void*)&keypath;
         topView = [self topView];
     }
     
-    if (keyboardSize.height != 0){
-        CGFloat newHeight = topView.frame.size.height - keyboardSize.height;
-        topViewFrame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, topView.frame.size.width, newHeight);
-    }else{
-        topViewFrame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, topView.frame.size.width, topView.frame.size.height);
-    }
+    CGFloat newHeight = topView.frame.size.height - keyboardSize.height;
+    topViewFrame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, topView.frame.size.width, topView.frame.size.height);
     
     if (topView.frame.size.width != 0){
-
+        
         viewController.view.frame = initialFrame;
         
         [self fadeViewIn:viewController.view sourceView:topView overlayView:nil popupFrame:viewController.view.frame sourceView:topViewFrame];
         
     }
-
+    
 }
 
 - (UIViewController*)mj_popupViewController {
@@ -489,7 +512,7 @@ static void * const keypath = (void*)&keypath;
     NSLog(@"Teclado oculto");
     keyboardSize.height = 0;
     keyboardSize.width = 0;
-    [self callFadeViewIn];
+    [self callFadeViewOut];
 }
 
 @end
