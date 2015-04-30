@@ -42,9 +42,6 @@ static void * const keypath = (void*)&keypath;
 -(void)viewDidLoad{
     NSLog(@"view did load!");
     
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange:)
-                                                 name: UIDeviceOrientationDidChangeNotification object:nil];
-    
     // Listen for keyboard appearances and disappearances
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardDidShow:)
@@ -57,12 +54,6 @@ static void * const keypath = (void*)&keypath;
                                                object:nil];
 }
 
-- (void)deviceOrientationDidChange:(NSNotification *)notification {
-    if([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad){
-        NSLog(@"Rotada");
-    }
-    
-}
 
 -(void) callFadeViewIn{
 
@@ -73,19 +64,32 @@ static void * const keypath = (void*)&keypath;
         initialFrame = viewController.view.frame;
     }
     
-    if (topView.frame.size.width == 0){
-        topView = [self topView];
+    if (!topView){
+        topView = [[UIView alloc]init];
+    }
+    
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    
+    UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+    CGFloat screenWidth;
+    CGFloat screenHeight;
+    if (orientation == UIDeviceOrientationPortrait || orientation == UIDeviceOrientationPortraitUpsideDown){
+        screenWidth = MIN(screenRect.size.height,screenRect.size.width);
+        screenHeight = MAX(screenRect.size.height,screenRect.size.width);
+    }else{
+        screenWidth = MAX(screenRect.size.height,screenRect.size.width);
+        screenHeight = MIN(screenRect.size.height,screenRect.size.width);
     }
 
-    CGFloat newHeight = topView.frame.size.height - keyboardSize.height;
-        topViewFrame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, topView.frame.size.width, newHeight);
-
+    
+    screenHeight -= keyboardSize.height;
+    
+    CGRect frame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, screenWidth, screenHeight);
+    topView.frame = frame;
+    
     if (topView.frame.size.width != 0){
-
         viewController.view.frame = initialFrame;
-        
-        [self fadeViewIn:viewController.view sourceView:topView overlayView:nil popupFrame:viewController.view.frame sourceView:topViewFrame];
-        
+        [self fadeViewIn:viewController.view sourceView:topView overlayView:nil popupFrame:viewController.view.frame sourceView:topView.frame];
     }
     
 }
@@ -494,6 +498,8 @@ static void * const keypath = (void*)&keypath;
     //Given size may not account for screen rotation
     int height = MIN(keyboardSize.height,keyboardSize.width);
     int width = MAX(keyboardSize.height,keyboardSize.width);
+    CGSize size = CGSizeMake(width, height);
+    keyboardSize = size;
     keyboardVisible = YES;
     [self callFadeViewIn];
 }
@@ -504,7 +510,7 @@ static void * const keypath = (void*)&keypath;
     keyboardSize.height = 0;
     keyboardSize.width = 0;
     keyboardVisible = NO;
-    [self callFadeViewOut];
+    [self callFadeViewIn];
 }
 
 #pragma mark autorotate
