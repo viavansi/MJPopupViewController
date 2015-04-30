@@ -32,6 +32,7 @@ CGSize keyboardSize;
 BOOL isPortrait;
 BOOL isLandscape;
 BOOL firstTime;
+BOOL keyboardVisible;
 
 ////////////////////////////////////////////////////////////////////////////
 #pragma mark -
@@ -503,7 +504,7 @@ static void * const keypath = (void*)&keypath;
     //Given size may not account for screen rotation
     int height = MIN(keyboardSize.height,keyboardSize.width);
     int width = MAX(keyboardSize.height,keyboardSize.width);
-    
+    keyboardVisible = YES;
     [self callFadeViewIn];
 }
 
@@ -512,7 +513,18 @@ static void * const keypath = (void*)&keypath;
     NSLog(@"Teclado oculto");
     keyboardSize.height = 0;
     keyboardSize.width = 0;
+    keyboardVisible = NO;
     [self callFadeViewOut];
+}
+
+#pragma mark autorotate
+
+-(NSUInteger)supportedInterfaceOrientations {
+    return UIInterfaceOrientationMaskLandscape | UIInterfaceOrientationMaskPortrait;
+}
+
+-(BOOL)shouldAutorotate {
+    return !keyboardVisible;
 }
 
 @end
