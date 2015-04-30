@@ -29,9 +29,6 @@ CGRect initialFrame;
 UIView *topView;
 UIView *topViewModified;
 CGSize keyboardSize;
-BOOL isPortrait;
-BOOL isLandscape;
-BOOL firstTime;
 BOOL keyboardVisible;
 
 ////////////////////////////////////////////////////////////////////////////
@@ -44,11 +41,6 @@ static void * const keypath = (void*)&keypath;
 
 -(void)viewDidLoad{
     NSLog(@"view did load!");
-    
-    isPortrait = NO;
-    isLandscape = NO;
-    firstTime = YES;
-    
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(deviceOrientationDidChange:)
                                                  name: UIDeviceOrientationDidChangeNotification object:nil];
@@ -68,8 +60,6 @@ static void * const keypath = (void*)&keypath;
 - (void)deviceOrientationDidChange:(NSNotification *)notification {
     if([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad){
         NSLog(@"Rotada");
-        firstTime = YES;
-//        [self performSelector:@selector(callFadeViewIn) withObject:self afterDelay:0.8];
     }
     
 }
