@@ -8,7 +8,6 @@
 
 #import "UIViewController+MJPopupViewController.h"
 #import <QuartzCore/QuartzCore.h>
-#import "MJPopupBackgroundView.h"
 #import <objc/runtime.h>
 
 #define kPopupModalAnimationDuration 0.35
@@ -94,32 +93,6 @@ static void * const keypath = (void*)&keypath;
     
 }
 
--(void) callFadeViewOut{
-    
-    UIView *topViewCopy;
-    CGRect topViewFrame;
-
-    if (initialFrame.size.width == 0){
-        initialFrame = viewController.view.frame;
-    }
-    
-    if (topView.frame.size.width == 0){
-        topView = [self topView];
-    }
-    
-    CGFloat newHeight = topView.frame.size.height - keyboardSize.height;
-    topViewFrame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, topView.frame.size.width, topView.frame.size.height);
-    
-    if (topView.frame.size.width != 0){
-        
-        viewController.view.frame = initialFrame;
-        
-        [self fadeViewIn:viewController.view sourceView:topView overlayView:nil popupFrame:viewController.view.frame sourceView:topViewFrame];
-        
-    }
-    
-}
-
 - (UIViewController*)mj_popupViewController {
     return objc_getAssociatedObject(self, kMJPopupViewController);
 }
@@ -129,11 +102,11 @@ static void * const keypath = (void*)&keypath;
     
 }
 
-- (MJPopupBackgroundView*)mj_popupBackgroundView {
+- (UIView*)mj_popupBackgroundView {
     return objc_getAssociatedObject(self, kMJPopupBackgroundView);
 }
 
-- (void)setMj_popupBackgroundView:(MJPopupBackgroundView *)mj_popupBackgroundView {
+- (void)setMj_popupBackgroundView:(UIView *)mj_popupBackgroundView {
     objc_setAssociatedObject(self, kMJPopupBackgroundView, mj_popupBackgroundView, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     
 }
@@ -198,9 +171,6 @@ static void * const keypath = (void*)&keypath;
     // customize popupView
     popupView.layer.shadowPath = [UIBezierPath bezierPathWithRect:popupView.bounds].CGPath;
     popupView.layer.masksToBounds = NO;
-//    popupView.layer.shadowOffset = CGSizeMake(5, 5);
-//    popupView.layer.shadowRadius = 5;
-//    popupView.layer.shadowOpacity = 0.5;
     popupView.layer.shouldRasterize = YES;
     popupView.layer.rasterizationScale = [[UIScreen mainScreen] scale];
     
@@ -211,10 +181,10 @@ static void * const keypath = (void*)&keypath;
     overlayView.backgroundColor = [UIColor clearColor];
     
     // BackgroundView
-    self.mj_popupBackgroundView = [[MJPopupBackgroundView alloc] initWithFrame:sourceView.bounds];
+    self.mj_popupBackgroundView = [[UIView alloc] initWithFrame:sourceView.bounds];
     self.mj_popupBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.mj_popupBackgroundView.backgroundColor = [UIColor clearColor];
-    self.mj_popupBackgroundView.alpha = 0.0f;
+    self.mj_popupBackgroundView.backgroundColor = [UIColor blackColor];
+    self.mj_popupBackgroundView.alpha = 0.7f;
     [overlayView addSubview:self.mj_popupBackgroundView];
     
     // Make the Background Clickable
@@ -223,12 +193,12 @@ static void * const keypath = (void*)&keypath;
 //    dismissButton.backgroundColor = [UIColor clearColor];
 //    dismissButton.frame = sourceView.bounds;
 //    [overlayView addSubview:dismissButton];
+//    [dismissButton addTarget:self action:@selector(dismissPopupViewControllerWithanimation:) forControlEvents:UIControlEventTouchUpInside];
     
     popupView.alpha = 0.0f;
     [overlayView addSubview:popupView];
     [sourceView addSubview:overlayView];
     
-//    [dismissButton addTarget:self action:@selector(dismissPopupViewControllerWithanimation:) forControlEvents:UIControlEventTouchUpInside];
     switch (animationType) {
         case MJPopupViewAnimationSlideBottomTop:
         case MJPopupViewAnimationSlideBottomBottom:
@@ -491,7 +461,6 @@ static void * const keypath = (void*)&keypath;
 
 - (void)keyboardDidShow: (NSNotification *) notification{
     
-    NSLog(@"Teclado visible");
     // Get the size of the keyboard.
     keyboardSize = [[[notification userInfo] objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
     
@@ -506,7 +475,6 @@ static void * const keypath = (void*)&keypath;
 
 - (void)keyboardDidHide: (NSNotification *) notification{
     
-    NSLog(@"Teclado oculto");
     keyboardSize.height = 0;
     keyboardSize.width = 0;
     keyboardVisible = NO;
