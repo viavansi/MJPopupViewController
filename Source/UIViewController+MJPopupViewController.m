@@ -484,7 +484,7 @@ static void * const keypath = (void*)&keypath;
 #pragma mark autorotate
 
 -(NSUInteger)supportedInterfaceOrientations {
-    return UIInterfaceOrientationMaskLandscape | UIInterfaceOrientationMaskPortrait;
+    return UIInterfaceOrientationMaskAll;
 }
 
 -(BOOL)shouldAutorotate {
