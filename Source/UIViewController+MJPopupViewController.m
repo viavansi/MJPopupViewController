@@ -39,17 +39,24 @@ BOOL keyboardVisible;
 static void * const keypath = (void*)&keypath;
 
 -(void)viewDidLoad{
-    NSLog(@"view did load!");
     
     // Listen for keyboard appearances and disappearances
+	[[NSNotificationCenter defaultCenter] removeObserver:self
+													name:UIKeyboardWillShowNotification
+												  object:nil];
+	
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardDidShow:)
-                                                 name:UIKeyboardDidShowNotification
+                                                 name:UIKeyboardWillShowNotification
                                                object:nil];
-    
+	
+	[[NSNotificationCenter defaultCenter] removeObserver:self
+													name:UIKeyboardWillHideNotification
+												  object:nil];
+	
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(keyboardDidHide:)
-                                                 name:UIKeyboardDidHideNotification
+                                                 name:UIKeyboardWillHideNotification
                                                object:nil];
 }
 
@@ -72,7 +79,11 @@ static void * const keypath = (void*)&keypath;
     UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
     CGFloat screenWidth;
     CGFloat screenHeight;
-    if (orientation == UIDeviceOrientationPortrait || orientation == UIDeviceOrientationPortraitUpsideDown){
+    if (orientation == UIDeviceOrientationPortrait
+		|| orientation == UIDeviceOrientationPortraitUpsideDown
+		|| orientation == UIDeviceOrientationFaceUp
+		|| orientation == UIDeviceOrientationFaceDown
+		|| orientation == UIDeviceOrientationUnknown){
         screenWidth = MIN(screenRect.size.height,screenRect.size.width);
         screenHeight = MAX(screenRect.size.height,screenRect.size.width);
     }else{
@@ -82,15 +93,10 @@ static void * const keypath = (void*)&keypath;
 
     
     screenHeight -= keyboardSize.height;
-    
-    CGRect frame = CGRectMake(topView.frame.origin.x, topView.frame.origin.y, screenWidth, screenHeight);
-    topView.frame = frame;
-    
-    if (topView.frame.size.width != 0){
-        viewController.view.frame = initialFrame;
-        [self fadeViewIn:viewController.view sourceView:topView overlayView:nil popupFrame:viewController.view.frame sourceView:topView.frame];
-    }
-    
+	
+	[UIView animateWithDuration:0.5f animations:^{
+		viewController.view.center = CGPointMake(screenWidth/2, screenHeight/2);
+	}];
 }
 
 - (UIViewController*)mj_popupViewController {
@@ -183,8 +189,8 @@ static void * const keypath = (void*)&keypath;
     // BackgroundView
     self.mj_popupBackgroundView = [[UIView alloc] initWithFrame:sourceView.bounds];
     self.mj_popupBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.mj_popupBackgroundView.backgroundColor = [UIColor blackColor];
-    self.mj_popupBackgroundView.alpha = 0.7f;
+    self.mj_popupBackgroundView.backgroundColor = [UIColor darkGrayColor];
+    self.mj_popupBackgroundView.alpha = 0.3f;
     [overlayView addSubview:self.mj_popupBackgroundView];
     
     // Make the Background Clickable
